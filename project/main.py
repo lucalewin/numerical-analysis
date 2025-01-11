@@ -20,8 +20,8 @@ def newton(
     for _ in range(int(max_iter)):
         j = jacobian(current_guess)
         f = function(current_guess)
-        update = np.linalg.solve(j, f)
-        current_guess -= update
+        update = np.linalg.solve(j, -f)
+        current_guess += update
         if np.linalg.norm(update) < tolerance:
             return current_guess
     raise Exception("newtons iteration did not converge")
@@ -83,17 +83,17 @@ def solve_trapezoidal(
     y = np.zeros((len(t), 2))
     y[0, :] = y0  # set the initial conditions
 
-    # define the Jacobian matrix function
+    # define the Jacobian matrix function J_F
     def j(yn):
         return np.array([[-1, h / 2], [-h * g / (2 * l) * np.cos(yn[0]), -1]])
 
     for i in range(len(t) - 1):
-        # define the 
+        # define the function F
         def f(yn):
             return (
                 np.array([
-                    +h / 2 * (y[i, 1] + yn[1]),  # F_1
-                    -h * g / (2 * l) * (np.sin(y[i, 0]) + np.sin(yn[0])),  # F_2
+                    +h / 2 * (y[i, 1] + yn[1]),  # F_1 (partly)
+                    -h * g / (2 * l) * (np.sin(y[i, 0]) + np.sin(yn[0])),  # F_2 (partly)
                 ])
                 + y[i, :]  # y_n
                 - yn  # y_(n+1)
@@ -114,7 +114,7 @@ def solve_trapezoidal(
             in_interval: np.ndarray = (t[i] <= roots) & (roots <= t[i + 1])
             if np.any(in_interval):
                 t_obst = roots[in_interval][0]
-                # update the next values (at i+1) to be at t_obst
+                # update the next values (at t_(i+1)) to be at t_obst
                 t[i + 1] = t_obst
                 y[i + 1, :] = [ao, p_w(t_obst)]
                 # and return all computed steps (discard all other values)
@@ -196,6 +196,36 @@ def plot_energy(t0, te, y0, h):
     plt.title("Energy of Pendulum for different step sizes")
     plt.xlabel('Time [s]')
     plt.ylabel('Energy [J]')
+    plt.grid()
+    plt.show()
+
+
+def plot_energy_error(t0, te, y0):
+    plt.figure(figsize=(10, 6))
+
+    h = np.logspace(-4, 0, 20)
+    error = []
+
+    for hi in h:
+        t, y = solve_trapezoidal(t0, te, y0, hi)
+        a = y[:, 0]
+        w = y[:, 1]
+
+        KE = 0.5 * m * (l * w) ** 2  # Kinetic energy
+        PE = m * g * l * (1 - np.cos(a))  # Potential energy
+        E_total = KE + PE
+
+        # Compute the error as the maximum deviation from initial total energy
+        e = np.abs(E_total - E_total[0])
+        error.append(np.max(e))
+
+    plt.plot(h, error, marker='o', label="Energy Error")
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel("Step size (h)")
+    plt.ylabel("Maximum Energy Error")
+    plt.title("Energy Error vs. Step Size")
+    plt.legend()
     plt.grid()
     plt.show()
 
@@ -336,6 +366,7 @@ def main() -> None:
     plot_simple(t0, te, y0, h)
     plot_different_step_size(t0, te, y0, [1/2, 1/5, 1/10, 1/100])
     plot_energy(t0, te, y0, [1/50, 1/100, 1/200, 1/1000])
+    plot_energy_error(t0, te, y0)
     plot_phase_space(t0, te, y0, h)
 
 
