@@ -3,7 +3,7 @@ from typing import Tuple, List
 import numpy as np
 import matplotlib.pyplot as plt
 
-from numa41.project.verify import pendulum
+from verify import pendulum
 
 
 def newton(function, jacobian, initial_guess, tolerance=1e-5, max_iter=1e3):

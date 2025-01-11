@@ -189,7 +189,7 @@ def main() -> None:
     plot_different_n(t0, te, y0, [10, 25, 50, 100])
 
     # TODO: with obstacle
-    # plot_obstacle_simple(t0, te, y0)
+    plot_obstacle_simple(t0, te, y0)
 
 if __name__ == '__main__':
     main()
